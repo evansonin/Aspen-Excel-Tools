@@ -29,14 +29,14 @@
             <button type="button" class="accordion-header">BOK Spreadsheet Tool</button>
             <div class="accordion-panel open"> <!-- 'open' class for initial styling, JS will set max-height -->
                 <span><i>Hover for more information</i></span>
-                <button type="button" title="Open ANB login page to download CSV" id="openAnbSiteButton"> 
+                <button type="button" title="Open ANB login page to download CSV" id="openBokSiteButton"> 
                     Step 1: Open Bank Login
                 </button>
                 <div class="input-group" title="Range for the interview questions">
                     <label for="bok-csv-file-input" >Step 2: Choose the downloaded CSV file</label>
                     <input type="file" title="Select file" placeholder="Select file" accept=".csv" class="ms-TextField-field" id="bok-csv-file-input">
                 </div>
-                <input type="checkbox" id="bok-markCleared" checked>
+                <input type="checkbox" id="bok-markCleared" checked><b>Mark as cleared</b>
 <!--                 <div class="checkNumberInputDiv">
                     <label for="lastCheckNumber" title="Previous check number. The program will add 1 to this number for the first transaction">Last Check Number</label>
                     <input type="number" id="lastCheckNumber" class="checkNumberInput" value=1 min=0>
@@ -52,14 +52,14 @@
             <button type="button" class="accordion-header">ANB Spreadsheet Tool</button>
             <div class="accordion-panel open"> <!-- 'open' class for initial styling, JS will set max-height -->
                 <span><i>Hover for more information</i></span>
-                <button type="button" title="Open BOK login page to download CSV" id="openBokSiteButton">
+                <button type="button" title="Open BOK login page to download CSV" id="openAnbSiteButton">
                     Step 1: Open Bank Login
                 </button>
                 <div class="input-group" title="Range for the interview questions">
                     <label for="bok-csv-file-input" >Step 2: Choose the downloaded CSV file</label>
                     <input type="file" title="Select file" placeholder="Select file" accept=".csv" class="ms-TextField-field" id="anb-csv-file-input">
                 </div>
-                <input type="checkbox" id="anb-markCleared" checked>
+                <input type="checkbox" id="anb-markCleared" checked><b>Mark as cleared</b>
 <!--                 <div class="checkNumberInputDiv">
                     <label for="lastCheckNumber" title="Previous check number. The program will add 1 to this number for the first transaction">Last Check Number</label>
                     <input type="number" id="lastCheckNumber" class="checkNumberInput" value=1 min=0>
