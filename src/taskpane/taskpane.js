@@ -15,10 +15,19 @@ const formatter = new Intl.DateTimeFormat("en-US", {
   month: "long",
 });
 
+let fullPath;
+let openFileName;
+// For making the error dialog work both in bebugging and in the published version
+let baseUrl;
+
 Office.onReady((info) => {
   if (info.host === Office.HostType.Excel) {
+    // File name and error dialog definitions
+    fullPath = Office.context.document.url;
+    openFileName = fullPath.substring(fullPath.lastIndexOf('/')+1);
+    // For making the error dialog work both in production and during debugging
+    baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
     // Bank login logic
-
     const openBokSiteButton = document.getElementById("openBokSiteButton");
     openBokSiteButton.addEventListener("click", () => {
       const url = "https://www.bokfinancial.com/business";
@@ -64,6 +73,78 @@ Office.onReady((info) => {
       );
     });
 
+    const SETTINGS_KEY = 'excelSettings';
+    const defaultSettings = {
+      checkFileName: true
+    };
+    const currentSettings = loadSettings();
+    applySettingsToUI(currentSettings);
+    let saveSettingsButton = document.getElementById('save-button')
+
+    function loadSettings() {
+      const storedSettingsString = getFromLocalStorage(SETTINGS_KEY);
+
+      // Handle the case where nothing is stored or the API returns "null" as a string
+      if (!storedSettingsString || storedSettingsString === "null") {
+          return defaultSettings;
+      }
+
+      try {
+          const loadedSettings = JSON.parse(storedSettingsString);
+          
+          // Merge with defaults. This is crucial for future-proofing.
+          // It ensures that if we add a new property to `defaultSettings`,
+          // users with old saved settings will still get that new property.
+          // The properties from `loadedSettings` will overwrite the `defaultSettings`.
+          const finalSettings = { ...defaultSettings, ...loadedSettings };
+          
+          return finalSettings;
+
+      } catch (error) {
+          console.error("Error parsing stored settings. Falling back to defaults.", error);
+          // If the stored JSON is corrupted, fall back to the default settings.
+          return defaultSettings;
+      }
+    }
+    function saveSettings(settingsObject) {
+      try {
+          const settingsString = JSON.stringify(settingsObject);
+          setInLocalStorage(SETTINGS_KEY, settingsString);
+      } catch (error) {
+          console.error("Could not save settings.", error);
+      }
+    }
+    function getSettingsFromUI() {
+      const checkFilenameEl = document.getElementById('check-filename-checkbox');
+
+      // Add other UI elements here in the future
+      // const authorNameEl = document.getElementById('author-name-input');
+      // const maxRowCountEl = document.getElementById('max-row-count-input');
+
+      return {
+          checkFileName: checkFilenameEl.checked,
+          // authorName: authorNameEl.value,
+          // maxRowCount: parseInt(maxRowCountEl.value, 10) || 0 // Parse integers
+      };
+    }
+    function applySettingsToUI(settings) {
+      const checkFilenameEl = document.getElementById('check-filename-checkbox');
+      if (checkFilenameEl) {
+          checkFilenameEl.checked = settings.checkFileName;
+      }
+
+      // Add other UI elements here in the future
+      // const authorNameEl = document.getElementById('author-name-input');
+      // if (authorNameEl) {
+      //     authorNameEl.value = settings.authorName;
+      // }
+    }
+    saveSettingsButton.addEventListener("click", () => {
+      const settingsToSave = getSettingsFromUI();
+      saveSettings(settingsToSave);
+    })
+
+
     // CSV import logic
 
     const importBokCsvButton = document.getElementById("import-bok-csv-button");
@@ -71,20 +152,32 @@ Office.onReady((info) => {
     const bokFileInput = document.getElementById("bok-csv-file-input");
     const anbFileInput = document.getElementById("anb-csv-file-input");
 
-    importBokCsvButton.addEventListener("click", () => {
+    importBokCsvButton.addEventListener("click", async () => { // <-- Make the function async
       const file = bokFileInput.files[0];
       if (file) {
         const reader = new FileReader();
-        reader.onload = function (event) {
+        reader.onload = async function (event) { // <-- Make this function async too
           let parsedData;
           const csvData = event.target.result;
 
-          // Use Papa Parse to convert CSV to a 2D array
           parsedData = Papa.parse(csvData, { skipEmptyLines: true, skipFirstNLines: 1 }).data;
 
           if (parsedData && parsedData.length > 0) {
-            // Call our function to write the data to Excel
-            writeToSpreadsheet(parsedData, "bok");
+            if (correctWorkbookOpen("bok")) {
+              writeToSpreadsheet(parsedData, "bok");
+            } else {
+              let proceed = false;
+              // Await the result of the dialog
+              if (document.getElementById('check-filename-checkbox').checked) {
+                proceed = await showErrorDialog("generic", "\"BOK\" not found in the currently open workbook's name. Proceed anyway?", null, "yes-no");
+              } else {
+                proceed = true;
+              }
+              
+              if (proceed) {
+                writeToSpreadsheet(parsedData, "bok");
+              }
+            }
           } else {
             console.error("Could not read data from CSV.");
             showErrorDialog("generic", "Could not parse the CSV. Ensure you are using the CSV from ANB for this tool.");
@@ -100,22 +193,33 @@ Office.onReady((info) => {
         showErrorDialog("generic", "Please select a file.");
       }
     });
-    importAnbCsvButton.addEventListener("click", () => {
+    // MODIFIED importAnbCsvButton event listener
+    importAnbCsvButton.addEventListener("click", async () => { // <-- Make the function async
       const file = anbFileInput.files[0];
       if (file) {
         const reader = new FileReader();
-        reader.onload = function (event) {
+        reader.onload = async function (event) { // <-- Make this function async too
           let parsedData;
           const csvData = event.target.result;
 
-          // Use Papa Parse to convert CSV to a 2D array
           parsedData = Papa.parse(csvData, { skipEmptyLines: true, skipFirstNLines: 4 }).data;
 
           if (parsedData && parsedData.length > 0) {
-            // Call our function to write the data to Excel
-            parsedData.sort((a, b) => new Date(a[1]) - new Date(b[1])); // Sort array of arrays by date, since the export doesn't seem to put them in order
-            console.log(parsedData);
-            writeToSpreadsheet(parsedData, "anb");
+            parsedData.sort((a, b) => new Date(a[1]) - new Date(b[1]));
+            if (correctWorkbookOpen("anb")) {
+              writeToSpreadsheet(parsedData, "anb");
+            } else {
+              let proceed = false;
+              // Await the result of the dialog
+              if (document.getElementById('check-filename-checkbox').checked) {
+                proceed = await showErrorDialog("generic", "\"ANB\" not found in the currently opened workbook's name. Proceed anyway?", null, "yes-no");
+              } else {
+                proceed = true;
+              }
+              if (proceed) {
+                writeToSpreadsheet(parsedData, "anb");
+              }
+            }
           } else {
             console.error("Could not read data from CSV.");
             showErrorDialog("generic", "Could not parse the CSV. Ensure you are using the CSV from ANB for this tool.");
@@ -151,15 +255,12 @@ async function writeToSpreadsheet(data, bank = "bok") {
         break;
       case "anb":
         dataMonth = new Date(data[0][1]);
-        console.log(dataMonth);
         break;
       case "default":
         throw new Error();
     }
     monthNumber = (dataMonth.getMonth() + 1).toString().padStart(2, "0");
-    console.log(monthNumber);
     correctSheet = formatter.format(dataMonth).toString();
-    console.log(`fjweq ${correctSheet}`);
   } catch (error) {
     showErrorDialog(
       "generic",
@@ -212,7 +313,6 @@ async function writeToSpreadsheet(data, bank = "bok") {
             } else {
               // If all else fails
               showErrorDialog("missingSheet", undefined, correctSheet);
-              console.log(correctSheet);
               throw new Error("The desired sheet was not found");
             }
           }
@@ -310,7 +410,6 @@ async function writeToSpreadsheet(data, bank = "bok") {
             }
           } else if (bank == "anb") {
             sheet.getCell(firstEmptyRowIndex + i, 0).values = data[i][1];
-            console.log(data);
             if (data[i][2].startsWith("Square Inc")) {
               if (data[i][5]) {
                 sheet.getCell(firstEmptyRowIndex + i, 1).values = "ACH Deposit: Square, BSE Sales";
@@ -383,36 +482,55 @@ async function getFirstEmptyRow(ignoreUpToRow = 0, columnLetter = "A") {
   return rowIndex;
 }
 
-function showErrorDialog(errorType = null, errorText = "Generic error", sheetName = null) {
-  const correctSheet = sheetName || "the specified month"; // Fallback text
-  const urlData = `?type=${encodeURIComponent(errorType)}&text=${encodeURIComponent(errorText)}&month=${encodeURIComponent(correctSheet)}`;
-  const dialogUrl = `${window.location.origin}/errorDialog.html${urlData}`;
-  // A variable to hold the dialog object
-  let dialog;
+// MODIFIED showErrorDialog function
+function showErrorDialog(errorType = null, errorText = "Generic error", sheetName = null, button = "ok") {
+  // Return a new Promise
+  return new Promise((resolve) => {
+    const correctSheet = sheetName || "the specified month"; // Fallback text
+    const urlData = `?type=${encodeURIComponent(errorType)}&text=${encodeURIComponent(errorText)}&month=${encodeURIComponent(correctSheet)}&button=${button}`;
+    const dialogUrl = `${baseUrl}errorDialog.html${urlData}`;
+    let dialog;
 
-  Office.context.ui.displayDialogAsync(
-    dialogUrl,
-    { height: 25, width: 25, displayInIframe: true },
-    (asyncResult) => {
-      if (asyncResult.status === Office.AsyncResultStatus.Failed) {
-        // Handle error opening dialog
-        console.error(`Error opening dialog: ${asyncResult.error.message}`);
-        return;
-      }
-
-      // If successful, we get a dialog object.
-      dialog = asyncResult.value;
-
-      // Add an event handler to listen for messages from the dialog.
-      dialog.addEventHandler(Office.EventType.DialogMessageReceived, (arg) => {
-        // Check if the message is the one we expect
-        if (arg.message === "close-dialog") {
-          // Close the dialog
-          dialog.close();
+    Office.context.ui.displayDialogAsync(
+      dialogUrl,
+      { height: 25, width: 25, displayInIframe: true },
+      (asyncResult) => {
+        if (asyncResult.status === Office.AsyncResultStatus.Failed) {
+          console.error(`Error opening dialog: ${asyncResult.error.message}`);
+          resolve(false); // Resolve with false if the dialog fails to open
+          return;
         }
-      });
-    }
-  );
+
+        dialog = asyncResult.value;
+
+        // Event handler for messages from the dialog.
+        dialog.addEventHandler(Office.EventType.DialogMessageReceived, (arg) => {
+          dialog.close(); // Close the dialog on any message
+          if (arg.message === "yes") {
+            resolve(true); // Resolve the promise with true for "yes"
+          } else {
+            // This handles "close-dialog" or any other message as a "no"
+            resolve(false); // Resolve the promise with false
+          }
+        });
+
+        // Event handler for when the dialog is closed by the user (e.g., clicking the 'X')
+        dialog.addEventHandler(Office.EventType.DialogEventReceived, (arg) => {
+            console.log("Dialog event received: " + arg.error);
+            resolve(false); // Also resolve with false if the dialog is just closed
+        });
+      }
+    );
+  });
+}
+
+function correctWorkbookOpen(bank) {
+  if (openFileName.toLowerCase().includes(bank)) {
+    return true;
+  } else {
+    return false;
+  }
+
 }
 
 export async function run() {
@@ -424,5 +542,28 @@ export async function run() {
     });
   } catch (error) {
     console.error(error);
+  }
+}
+
+function setInLocalStorage(key, value) {
+  const myPartitionKey = Office.context.partitionKey;
+
+  // Check if local storage is partitioned. 
+  // If so, use the partition to ensure the data is only accessible by your add-in.
+  if (myPartitionKey) {
+    localStorage.setItem(myPartitionKey + key, value);
+  } else {
+    localStorage.setItem(key, value);
+  }
+}
+
+function getFromLocalStorage(key) {
+  const myPartitionKey = Office.context.partitionKey;
+
+  // Check if local storage is partitioned.
+  if (myPartitionKey) {
+    return localStorage.getItem(myPartitionKey + key);
+  } else {
+    return localStorage.getItem(key);
   }
 }

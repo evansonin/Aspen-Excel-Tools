@@ -43,6 +43,9 @@
                 <button id="ok-button" class="ms-Button">
                     <span class="ms-Button-label">OK</span>
                 </button>
+                <button id="cancel-button" class="ms-Button" hidden>
+                    <span class="ms-Button-label">Cancel</span>
+                </button>
             </div>
         </div>
     </div>
@@ -56,9 +59,13 @@
         const errorType = urlParams.get('type');
         const monthName = urlParams.get('month');
         const givenErrorText = urlParams.get('text');
+        const buttons = urlParams.get('button');
+        console.log(buttons);
         let errorText = document.getElementById('error-text');
+        let options = false;
 
-        // Find the placeholder element and set its text content
+        const okButton = document.getElementById('ok-button');
+        const noButton = document.getElementById('cancel-button')
         
         if (errorType == "missingSheet") {
             errorText.innerHTML = `A sheet for ${monthName} could not be found.`;
@@ -66,13 +73,24 @@
         if (errorType == "generic") {
             errorText.innerHTML = givenErrorText;
         }
+        if (buttons == "yes-no") {
+            noButton.hidden = false;
+            okButton.innerHTML = "Yes";
+            options = true;
+        }
 
-        const okButton = document.getElementById('ok-button');
         okButton.onclick = () => {
             // Send a message to the parent (taskpane.js)
             // The string 'close-dialog' is a signal we'll listen for.
-            Office.context.ui.messageParent('close-dialog');
+            if (options) {
+                Office.context.ui.messageParent('yes');
+            } else {
+                Office.context.ui.messageParent('close-dialog');
+            }
         };
+        noButton.onclick = () => {
+            Office.context.ui.messageParent('close-dialog');
+        }
     });
 </script>
 </html>
