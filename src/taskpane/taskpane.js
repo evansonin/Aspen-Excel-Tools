@@ -342,6 +342,7 @@ async function writeToSpreadsheet(data, bank = "bok") {
 
         // If the first empty row in Col D is > 7, it means there's data in or above row 7.
         // The actual last check number is in the row *above* this first empty row.
+        console.log(`Here 345 ${firstEmptyRowInCheckCol_D}`);
         if (firstEmptyRowInCheckCol_D > 7) {
           const cellWithLastCheck = sheet.getCell(firstEmptyRowInCheckCol_D - 1, 3);
           cellWithLastCheck.load("values");
@@ -361,6 +362,13 @@ async function writeToSpreadsheet(data, bank = "bok") {
             // numericLastCheckNumber remains 0, so first new check will be 1
           }
           // If cell was empty, numericLastCheckNumber remains 0, so new checks start from 1.
+        } else {
+          let newCheckNumber = await getPreviousMonthsCheckNumber(correctSheet);
+          console.log(newCheckNumber);
+          if(newCheckNumber) {
+            numericLastCheckNumber = newCheckNumber;
+            console.log(numericLastCheckNumber);
+          }
         }
         // Loop to iterate through each item on the daily list
         /*      Column 0: Date
@@ -456,9 +464,15 @@ async function writeToSpreadsheet(data, bank = "bok") {
 
 
 
-async function getFirstEmptyRow(ignoreUpToRow = 0, columnLetter = "A") {
+async function getFirstEmptyRow(ignoreUpToRow = 0, columnLetter = "A", sheetName = null) {
   const rowIndex = await Excel.run(async (context) => {
-    const sheet = context.workbook.worksheets.getActiveWorksheet();
+    let sheet;
+    if (!sheetName) {
+      sheet = context.workbook.worksheets.getActiveWorksheet();
+    } else {
+      sheet = context.workbook.worksheets.getItem(sheetName);
+    }
+    
     const column = sheet.getRange(`${columnLetter}:${columnLetter}`); // e.g. A:A
 
     let targetRowIndex;
@@ -480,6 +494,63 @@ async function getFirstEmptyRow(ignoreUpToRow = 0, columnLetter = "A") {
     return targetRowIndex;
   });
   return rowIndex;
+}
+
+async function getPreviousMonthsCheckNumber(dateString) {
+  const date = new Date(dateString);
+  let lastMonthsCheckNumberRow;
+  date.setMonth(date.getMonth() - 1);
+
+  const newMonth = date.toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric"
+  });
+
+  try {
+    // This part of your code was fine
+    lastMonthsCheckNumberRow = await getFirstEmptyRow(7, "D", newMonth);
+    console.log(`First empty row in previous month's sheet is: ${lastMonthsCheckNumberRow}`);
+  } catch (error) {
+    console.error(`Failed to get first empty row. Assuming check number is 1. Error: ${error}`);
+    // If we can't find the previous month's sheet or have an error, start with 1.
+    return 0;
+  }
+
+  if (lastMonthsCheckNumberRow > 7) {
+    // We need to capture the result of Excel.run
+    try {
+      // *** CHANGE 1: Assign the result of Excel.run to a variable ***
+      const lastCheckNumber = await Excel.run(async (context) => {
+        // *** CHANGE 2: Use context.workbook, NOT Office.context.workbook ***
+        const worksheet = context.workbook.worksheets.getItem(newMonth);
+        const cellWithLastCheck = worksheet.getCell(lastMonthsCheckNumberRow - 1, 3); // Row index, Column index (D is 3)
+
+        // Load the 'values' property of the cell
+        cellWithLastCheck.load("values");
+
+        // Sync to execute the load operation and get the value from the document
+        await context.sync();
+
+        console.log("Value from cell:", cellWithLastCheck.values);
+
+        // *** CHANGE 3: The value is a 2D array, e.g., [[1001]]. We need to extract it. ***
+        // Return the actual value, which Excel.run will resolve its promise with.
+        return cellWithLastCheck.values[0][0];
+      });
+
+      // The next check number will be the last one plus one.
+      return lastCheckNumber;
+
+    } catch (error) {
+        console.error(`Failed to get check number from previous month: ${error}`);
+        // If the Excel.run fails for any reason, default to 1.
+        return 0;
+    }
+  } else {
+    // If the first empty row is row 7, it means the previous month was empty.
+    // So, the check number for the new month should start at 1.
+    return 0;
+  }
 }
 
 // MODIFIED showErrorDialog function
