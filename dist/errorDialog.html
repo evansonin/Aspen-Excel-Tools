@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sheet Not Found</title>
+    <link rel="stylesheet" href="https://res-1.cdn.office.net/files/fabric-cdn-prod_20230815.002/office-ui-fabric-core/11.1.0/css/fabric.min.css">
+    <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js" type="text/javascript"></script>
+    <style>
+        /* A container for the pop-up with a 2:1 aspect ratio */
+        .popup-container {
+            
+            /* Basic styling for visibility */
+            border: 1px solid #e0e0e0;
+            background-color: #ffffff;
+            padding: 20px;
+            
+            /* Using flexbox to position the content and buttons */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* A container for the action buttons */
+        .popup-actions {
+            /* Aligns the buttons to the right */
+            text-align: right; 
+        }
+
+        /* Adds a small margin between the buttons */
+        .popup-actions .ms-Button {
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="ms-Fabric" dir="ltr">
+        <div class="popup-container">
+            <div class="popup-content">
+                <p id="error-text" class="ms-fontSize-l"></p>
+            </div>
+            <div class="popup-actions">
+                <button id="ok-button" class="ms-Button">
+                    <span class="ms-Button-label">OK</span>
+                </button>
+                <button id="cancel-button" class="ms-Button" hidden>
+                    <span class="ms-Button-label">Cancel</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+<script>
+    Office.onReady(() => {
+        // Get the query parameters from the current URL
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        // Get the specific value for the 'month' key
+        const errorType = urlParams.get('type');
+        const monthName = urlParams.get('month');
+        const givenErrorText = urlParams.get('text');
+        const buttons = urlParams.get('button');
+        console.log(buttons);
+        let errorText = document.getElementById('error-text');
+        let options = false;
+
+        const okButton = document.getElementById('ok-button');
+        const noButton = document.getElementById('cancel-button')
+        
+        if (errorType == "missingSheet") {
+            errorText.innerHTML = `A sheet for ${monthName} could not be found.`;
+        }
+        if (errorType == "generic") {
+            errorText.innerHTML = givenErrorText;
+        }
+        if (buttons == "yes-no") {
+            noButton.hidden = false;
+            okButton.innerHTML = "Yes";
+            options = true;
+        }
+
+        okButton.onclick = () => {
+            // Send a message to the parent (taskpane.js)
+            // The string 'close-dialog' is a signal we'll listen for.
+            if (options) {
+                Office.context.ui.messageParent('yes');
+            } else {
+                Office.context.ui.messageParent('close-dialog');
+            }
+        };
+        noButton.onclick = () => {
+            Office.context.ui.messageParent('close-dialog');
+        }
+    });
+</script>
+</html>

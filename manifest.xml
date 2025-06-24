@@ -16,6 +16,7 @@
   <AppDomains>
     <AppDomain>https://evansonin.github.io</AppDomain>
     <AppDomain>https://www.bokfinancial.com</AppDomain>
+    <AppDomain>https://exchange.bokfinancial.com</AppDomain>
     <AppDomain>https://www.anbbank.com</AppDomain>
   </AppDomains>
 

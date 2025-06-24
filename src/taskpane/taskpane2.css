@@ -1,6 +1,5 @@
 body { font-family: Arial, sans-serif; margin: 15px; font-size: 14px; overflow-x: hidden;}
 label { display: block; margin-top: 12px; margin-bottom: 4px; font-weight: bold; }
-input[type="text"] { width: calc(100% - 22px); padding: 8px; margin-bottom: 3px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;}
 textarea[type="paragraph"] { width: 100%; height: 72px; padding: 8px; margin-bottom: 3px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; resize: none;}
 select { width: 100%; padding: 8px; margin-bottom: 3px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;}
 button { padding: 10px 15px; background-color: #689E42; color: white; border: none; border-radius: 4px; cursor: pointer; margin-top: 15px; width: 100%;} 
@@ -21,40 +20,61 @@ background-color: #58585a;
 }
 .input-group button:hover { background-color: #444446; }
 .input-with-button { display: flex; align-items: center; }
-.input-with-button input[type="text"] { flex-grow: 1; margin-right: 5px; }
-        /* Accordion Styles */
+.address-input{
+  /* flex: <flex-grow> <flex-shrink> <flex-basis>; */
+  flex: 0 1 50%;
+}
+.port-input{
+  /* flex: <flex-grow> <flex-shrink> <flex-basis>; */
+  flex: 0 1 50%;
+}
+
+/* New: Styling for icons within accordion headers */
+.icon {
+  height: 1em; /* Make the icon height match the current font size */
+  vertical-align: middle; /* Align the icon vertically with the text */
+  margin-left: 8px; /* Space between the icon and the header text */
+  /* display: inline-block; */ /* img is inline-block by default */
+  /* float: right; */ /* Remove float, flexbox handles positioning */
+}
+
+/* Accordion Styles */
 .accordion-container {
 margin-top: 20px; /* Space above the accordion */
 margin-bottom: 20px; /* Space below the accordion */
 }
 .accordion-header {
-background-color: #177a8a; 
-color: #fff; /* Darker text color */
-cursor: pointer;
-padding: 12px 15px;
-width: 100%;
-text-align: left;
-border: 1px solid #ccc; /* Add a border */
-border-radius: 4px; /* Match other elements */
-outline: none;
-transition: background-color 0.3s ease;
-font-weight: bold; /* Make header text bold */
-font-size: 14px; /* Match body font-size */
-box-sizing: border-box; /* Include padding and border in the element's total width and height */
-margin-top: 0; /* Reset margin if container handles it */
-margin-bottom: 0; /* Panel will be directly below */
+  display: flex; /* Enable flexbox */
+  align-items: center; /* Vertically align items */
+  justify-content: space-between; /* Distribute space between content (text+icon) and ::after */
+  background-color: #177a8a; 
+  color: #fff; /* Darker text color */
+  cursor: pointer;
+  padding: 12px 15px;
+  width: 100%;
+  /* text-align: left; */ /* Not needed with flexbox */
+  border: 1px solid #ccc; /* Add a border */
+  border-radius: 4px; /* Match other elements */
+  outline: none;
+  transition: background-color 0.3s ease;
+  font-weight: bold; /* Make header text bold */
+  font-size: 14px; /* Match body font-size */
+  box-sizing: border-box; /* Include padding and border in the element's total width and height */
+  margin-top: 0; /* Reset margin if container handles it */
+  margin-bottom: 0; /* Panel will be directly below */
 }
 
 .accordion-header:hover, .accordion-header.active {
-background-color: #0D7080;
+  background-color: #0D7080;
 }
 
 .accordion-header::after {
-content: '\002B'; /* Unicode character for "+" sign */
-font-weight: bold;
-float: right;
-margin-left: 5px;
-transition: transform 0.2s ease-out;
+  content: '\002B'; /* Unicode character for "+" sign */
+  font-weight: bold;
+  /* float: right; */ /* Remove float, flexbox handles positioning */
+  margin-left: 5px; /* Space between the icon/text group and the plus/minus sign */
+  transition: transform 0.2s ease-out;
+  flex-shrink: 0; /* Prevent the plus/minus sign from shrinking */
 }
 
 .accordion-header.active::after {
@@ -100,6 +120,68 @@ font-weight: normal; /* Normal font weight for checkbox labels */
 margin-top: 0;
 margin-bottom: 0;
 vertical-align: middle;
+}
+
+
+/* --- The Main Flex Container --- */
+.form-section {
+  font-family: sans-serif; /* A nice default font */
+  padding: 20px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+}
+
+/* --- New: Styling for the Heading --- */
+.form-section h3 {
+  margin-top: 0; /* Remove default top margin */
+  margin-bottom: 0px; /* Create space below the heading */
+  font-size: 15px;
+  color: #333;
+}
+
+/* --- The Main Flex Container for inputs --- */
+.input-container {
+  display: flex;
+  gap: 10px; /* Space between the two input groups */
+}
+
+/* --- The Wrapper for each Label/Input Pair --- */
+.input-group {
+  display: flex;
+  flex-direction: column; 
+}
+
+/* --- Set the Width on the Groups --- */
+.text-group {
+  width: 70%;
+}
+
+.number-group {
+  width: 30%;
+}
+
+.date-group {
+    width: 50%
+}
+
+
+
+/* --- Styling for the Labels --- */
+.input-group label {
+  margin-bottom: 5px; /* Space between label and input */
+  font-weight: bold;
+  font-size: 14px;
+  color: #555;
+}
+
+/* --- Styling for the Inputs --- */
+.input-group input {
+  width: 100%; /* Make the input fill its parent group */
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
 }
 
 .checkNumberInputDiv {
