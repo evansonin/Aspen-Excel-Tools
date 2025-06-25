@@ -97,6 +97,14 @@ export function applySettingsToUI(settings) {
 }
 
 /**
+ * Resets all settings to their default values and applies them to the UI.
+ */
+export function resetToDefaultSettings() {
+  saveSettings(defaultSettings);
+  applySettingsToUI(defaultSettings);
+}
+
+/**
  * Stores a key-value pair in local storage, respecting Office.context.partitionKey.
  * @param {string} key The key to store.
  * @param {string} value The value to store.

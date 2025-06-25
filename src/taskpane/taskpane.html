@@ -72,7 +72,7 @@
             </div>
         </div>
         <div class="accordion-container">
-            <button type="button" class="accordion-header"><span>Divvy Spreadsheet Tool                <img class="icon" src="/assets/bill-logo.webp" alt="Bill logo"></span></button>
+            <button type="button" class="accordion-header"><span>Divvy Spreadsheet Tool<img class="icon" src="/assets/bill-logo.webp" alt="Bill logo"></span></button>
             <div class="accordion-panel" open>
                 <div class="form-section">
                     <!-- The Heading for the entire section -->
@@ -91,7 +91,7 @@
                         </div>
                     </div> <!-- end of .input-container -->
                 </div> <!-- end of .form-section -->
-                <button type="button">Submit</button><br><br><br>
+                <button type="button" id="billSubmit">Submit</button><br><br><br>
             </div>
         </div>
     </form>
@@ -122,14 +122,18 @@
                         </div>
                     </div> <!-- end of .input-container -->
                 </div> <!-- end of .form-section -->
+            <button type="button" class="hollow" id="resetToDefaults" title="Rever to default settings">
+                Default Settings
+            </button><br>
             <button type="button" id="save-button" title="Save settings">
                 Save Settings
-            </button><br><br><br>
+            </button>
+            <br><br><br>
         </div>
-        <button type="button" id="make-bill-thing-happen">Make bill thing happen</button>
+        <br>
     <footer>
         <div style="text-align:center;">
-            <small>Aspen Excel Tools v0.1</small>
+            <small>Aspen Excel Tools v0.2</small>
         </div>
     </footer>
 </body>

@@ -15,11 +15,15 @@ import {
   loadSettings, 
   saveSettings, 
   getSettingsFromUI, 
-  applySettingsToUI, 
+  applySettingsToUI,
+  resetToDefaultSettings, 
   setInLocalStorage, 
   getFromLocalStorage 
 } from "./utils/settingsManager";
-import { getBillData } from "./utils/divvyTool";
+import { 
+  getBillData,
+  writeToDivvySpreadsheet
+} from "./utils/divvyTool";
 import { showErrorDialog } from "./utils/errorDialogManager";
 
 let dialog = null;
@@ -28,7 +32,7 @@ let dialog = null;
 let fullPath;
 let openFileName;
 // For making the error dialog work both in bebugging and in the published version
-let baseUrl;
+export let baseUrl;
 
 /**
  * Initializes global variables related to the workbook and add-in base URL.
@@ -55,28 +59,39 @@ Office.onReady((info) => {
  */
 function billThingy() {
   // Find the button in the DOM
-  const billButton = document.getElementById("make-bill-thing-happen");
+  const billButton = document.getElementById("billSubmit");
 
   // Add the click event listener
   billButton.addEventListener("click", async () => {
-    // REMOVED: START_DATE and END_DATE constants are no longer needed.
-    
-    console.log("Button clicked. Fetching all available transactions via proxy...");
+    const startDate = document.getElementById("startDate").value;
+    const endDate = document.getElementById("endDate").value;
+    billButton.innerHTML = "Please wait..."
+    // startDate/endDate example: "2025-06-01"
+    console.log(`GOing to ask for between ${startDate} and ${endDate}`);
 
-    // Call the updated getBillTransactions function. It no longer takes any arguments.
+    if (new Date(startDate) > new Date(endDate)) {
+      showErrorDialog("generic", "Start date cannot be later than end date.", null, "ok", baseUrl);
+      return;
+    }
+    if (!startDate || !endDate) {
+      showErrorDialog("generic", "Please select start and ending dates.", null, "ok", baseUrl);
+    }
+    
+
+
+    // Call the getBillTransactions function
     try {
-      let billData = await getBillData();
-      console.log(billData);
+      let billData = await getBillData(startDate, endDate);
 
       const users = billData['users']['results'];
       const transactions = billData['transactions']['results'];
 
-    console.log(users);
-    console.log(transactions);
+      writeToDivvySpreadsheet(users, transactions, startDate, endDate);
     } catch (error) {
       console.error(error);
       showErrorDialog("generic", "Failed to retrieve information from Divvy.", null, "ok", baseUrl);
     }
+    billButton.innerHTML = "Submit";
 
 
 /*     getBillTransactions()
@@ -160,6 +175,10 @@ function setupSettings() {
   saveSettingsButton.addEventListener("click", () => {
     const settingsToSave = getSettingsFromUI();
     saveSettings(settingsToSave);
+  });
+  let defaultSettingsButton = document.getElementById('resetToDefaults');
+  defaultSettingsButton.addEventListener("click", () => {
+    resetToDefaultSettings();
   });
 }
 
