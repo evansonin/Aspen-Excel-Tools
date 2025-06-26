@@ -1,5 +1,6 @@
 /* global Excel, Office */
 
+import { baseUrl } from "../taskpane.js";
 // Date formatter used to generate sheet names in the format "Month Year" (e.g., "June 2025") based on dates from the CSV.
 const formatter = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
@@ -108,7 +109,7 @@ export async function writeToSpreadsheet(data, bank = "bok", showErrorDialog) {
               workbook.worksheets.getItem(correctedSheetNamesObj[correctSheet]).activate(); // If the correct worksheet (albeit with leading/following spaces) exists, swtich to it
             } else {
               // If all else fails
-              showErrorDialog("missingSheet", undefined, correctSheet);
+              showErrorDialog("missingSheet", undefined, correctSheet, "ok", baseUrl);
               throw new Error("The desired sheet was not found");
             }
           }

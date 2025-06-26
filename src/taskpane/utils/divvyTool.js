@@ -1,5 +1,5 @@
 import { showErrorDialog } from "./errorDialogManager.js";
-import { baseUrl  } from "../taskpane.js";
+import { baseUrl } from "../taskpane.js";
 
 
 /**
@@ -37,7 +37,7 @@ export async function getBillData(startDate, endDate) {
   } catch (error) {
     console.error('!!! [Client] An error occurred in getBillTransactions:', error);
     if(error.message.includes("Invalid or missing passcode")) {
-      showErrorDialog("generic", "Invalid password. Please check you have entered the correct password and hit \"Save Settings\".", null, "ok", baseUrl);
+      showErrorDialog("generic", "Incorrect password. Please check you have entered the correct password and hit \"Save Settings\".", null, "ok", baseUrl);
     } else if(error.message.includes("Failed to fetch")) {
       showErrorDialog("generic", "Failed to retrieve Divvy transaction data; a call was made to the server but no response was received. Make sure the server address and port are correct.", null, "ok", baseUrl);
     }

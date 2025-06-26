@@ -182,6 +182,9 @@ vertical-align: middle;
   width: 100%
 }
 
+.footer-text {
+  text-align: center;
+}
 
 
 /* --- Styling for the Labels --- */

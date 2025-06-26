@@ -92,7 +92,6 @@ function billThingy() {
         showErrorDialog("generic", "No transactions were found for the given time period.", null, "ok", baseUrl);
       }
       else {
-        console.log(transactions);
         writeToDivvySpreadsheet(users, transactions, employees, startDate, endDate);
       }
     } catch (error) {
