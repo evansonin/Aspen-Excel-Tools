@@ -1,6 +1,7 @@
 import { showErrorDialog } from "./errorDialogManager.js";
 import { baseUrl  } from "../taskpane.js";
 
+
 /**
  * Retrieves a list of transactions by calling our secure backend proxy.
  * This version fetches transactions within a specified date range.
@@ -12,13 +13,18 @@ import { baseUrl  } from "../taskpane.js";
 export async function getBillData(startDate, endDate) {
   const divvyAddress = document.getElementById('divvyProxyAddress').value;
   const divvyPort = document.getElementById('divvyProxyPort').value;
+  const divvyPassword = document.getElementById('divvyPassword').value;
   
-  // Construct the proxy URL with date parameters
-  const proxyUrl = `${divvyAddress}:${divvyPort}/api/transactions?startDate=${startDate}&endDate=${endDate}`;
+  // Construct the proxy URL with date parameters, using HTTPS
+  const proxyUrl = `https://${divvyAddress}:${divvyPort}/api/transactions?startDate=${startDate}&endDate=${endDate}`;
 
 
   try {
-    const response = await fetch(proxyUrl);
+    const response = await fetch(proxyUrl, {
+      headers: {
+        'x-passcode': divvyPassword // Add the passcode to the request headers
+      }
+    });
     if (!response.ok) {
       // This block runs if the status is 4xx or 5xx
       console.error('3. [Client] Response was NOT OK. Status:', response.status);
@@ -30,6 +36,11 @@ export async function getBillData(startDate, endDate) {
 
   } catch (error) {
     console.error('!!! [Client] An error occurred in getBillTransactions:', error);
+    if(error.message.includes("Invalid or missing passcode")) {
+      showErrorDialog("generic", "Invalid password. Please check you have entered the correct password and hit \"Save Settings\".", null, "ok", baseUrl);
+    } else if(error.message.includes("Failed to fetch")) {
+      showErrorDialog("generic", "Failed to retrieve Divvy transaction data; a call was made to the server but no response was received. Make sure the server address and port are correct.", null, "ok", baseUrl);
+    }
     return []; // Return empty array on failure
   }
 }
@@ -40,8 +51,9 @@ export async function getBillData(startDate, endDate) {
  *
  * @param {Object} divvyData - An array of transaction objects to be written.
  */
-export async function writeToDivvySpreadsheet(users, transactions, startDate, endDate) {
+export async function writeToDivvySpreadsheet(users, transactions, employees, startDate, endDate) {
 
+  console.log(employees);
   // Sheet name logic
   const formatDateForSheetName = (dateString) => {
     // Parse the YYYY-MM-DD string directly to avoid timezone issues
@@ -65,10 +77,19 @@ export async function writeToDivvySpreadsheet(users, transactions, startDate, en
       // If user is found, format the name as "LastName, FirstName"
       const fullName = `${user.lastName}, ${user.firstName}`;
       sortedTransactions[transactionKey] = { name: fullName }; // Store the full name associated with the transaction's key/index
+
+      // Find the position type from the employees array
+      let positionType = "Unknown";
+      const foundEmployee = employees.find(employee => employee[0] === fullName);
+      if (foundEmployee) {
+        positionType = foundEmployee[1]; // Get the position string
+      }
+      sortedTransactions[transactionKey].positionType = positionType;
+
     } else {
       // If user is not found, log a warning and assign a default value
       console.warn(`User with ID ${userId} not found for transaction at key/index: ${transactionKey}`);
-      sortedTransactions[transactionKey] = { name: "Unknown Cardholder" };
+      sortedTransactions[transactionKey] = { name: "Unknown Cardholder", positionType: "Unknown" };
     }
     // Date
     const occurredTime = currentTransaction.occurredTime;
@@ -79,7 +100,7 @@ export async function writeToDivvySpreadsheet(users, transactions, startDate, en
     // Transaction Description
     sortedTransactions[transactionKey].merchantName = (currentTransaction.merchantName);
   }
-  console.log(sortedTransactions);
+  // console.log(sortedTransactions);
   try {
     await Excel.run(async (context) => {
       const sheet = context.workbook.worksheets.getActiveWorksheet();
@@ -124,6 +145,10 @@ export async function writeToDivvySpreadsheet(users, transactions, startDate, en
         // Write merchant name to Transaction Description (B)
         const transactionDescriptionRange = sheet.getRange(transactionDescriptionColumn.letter + rowIndex);
         transactionDescriptionRange.values = [[transactionData.merchantName]];
+
+        // Write position to Type (K)
+        const typeRange = sheet.getRange(typeColumn.letter + rowIndex);
+        typeRange.values = [[transactionData.positionType]];
 
         rowIndex++;
       }

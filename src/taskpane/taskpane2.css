@@ -178,6 +178,10 @@ vertical-align: middle;
     width: 50%
 }
 
+.password-group {
+  width: 100%
+}
+
 
 
 /* --- Styling for the Labels --- */

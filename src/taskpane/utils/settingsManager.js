@@ -3,8 +3,9 @@
 export const SETTINGS_KEY = 'excelSettings';
 export const defaultSettings = {
   checkFileName: true,
-  divvyProxyAddress: "http://localhost",
-  divvyProxyPort: 3001
+  divvyProxyAddress: "localhost",
+  divvyProxyPort: 3001,
+  divvyPassword: ""
 };
 
 /**
@@ -58,6 +59,7 @@ export function getSettingsFromUI() {
   const checkFilenameEl = document.getElementById('check-filename-checkbox');
   const divvyProxyAddressEl = document.getElementById('divvyProxyAddress');
   const divvyProxyPortEl = document.getElementById('divvyProxyPort');
+  const divvyPasswordEl = document.getElementById('divvyPassword');
 
   // Add other UI elements here in the future
   // const authorNameEl = document.getElementById('author-name-input');
@@ -66,7 +68,8 @@ export function getSettingsFromUI() {
   return {
       checkFileName: checkFilenameEl.checked,
       divvyProxyAddress: divvyProxyAddressEl.value,
-      divvyProxyPort: divvyProxyPortEl.value
+      divvyProxyPort: divvyProxyPortEl.value,
+      divvyPassword: divvyPasswordEl.value
       // maxRowCount: parseInt(maxRowCountEl.value, 10) || 0 // Parse integers
   };
 }
@@ -79,6 +82,7 @@ export function applySettingsToUI(settings) {
   const checkFilenameEl = document.getElementById('check-filename-checkbox');
   const divvyProxyAddressEl = document.getElementById('divvyProxyAddress');
   const divvyProxyPortEl = document.getElementById('divvyProxyPort');
+  const divvyPasswordEl = document.getElementById('divvyPassword');
   if (checkFilenameEl) {
       checkFilenameEl.checked = settings.checkFileName;
   }
@@ -87,6 +91,9 @@ export function applySettingsToUI(settings) {
   }
   if (divvyProxyPortEl) {
     divvyProxyPortEl.value = settings.divvyProxyPort;
+  }
+  if (divvyPasswordEl) {
+    divvyPasswordEl.value = settings.divvyPassword;
   }
 
   // Add other UI elements here in the future

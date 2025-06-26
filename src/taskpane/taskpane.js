@@ -52,6 +52,7 @@ Office.onReady((info) => {
     billThingy();
     setupDateSelection();
   }
+  console.log("Aspen Excel Tools: Successfully loaded.");
 });
 
 /**
@@ -67,14 +68,15 @@ function billThingy() {
     const endDate = document.getElementById("endDate").value;
     billButton.innerHTML = "Please wait..."
     // startDate/endDate example: "2025-06-01"
-    console.log(`GOing to ask for between ${startDate} and ${endDate}`);
-
     if (new Date(startDate) > new Date(endDate)) {
       showErrorDialog("generic", "Start date cannot be later than end date.", null, "ok", baseUrl);
+      billButton.innerHTML = "Submit";
       return;
     }
     if (!startDate || !endDate) {
       showErrorDialog("generic", "Please select start and ending dates.", null, "ok", baseUrl);
+      billButton.innerHTML = "Submit";
+      return;
     }
     
 
@@ -85,32 +87,19 @@ function billThingy() {
 
       const users = billData['users']['results'];
       const transactions = billData['transactions']['results'];
-
-      writeToDivvySpreadsheet(users, transactions, startDate, endDate);
+      const employees = billData['employees'];
+      if(transactions.length == 0) {
+        showErrorDialog("generic", "No transactions were found for the given time period.", null, "ok", baseUrl);
+      }
+      else {
+        console.log(transactions);
+        writeToDivvySpreadsheet(users, transactions, employees, startDate, endDate);
+      }
     } catch (error) {
       console.error(error);
       showErrorDialog("generic", "Failed to retrieve information from Divvy.", null, "ok", baseUrl);
     }
     billButton.innerHTML = "Submit";
-
-
-/*     getBillTransactions()
-      .then(transactions => {
-        // The getBillTransactions function returns an array.
-        // We check if the array is valid and contains any items.
-        if (transactions && transactions.length > 0) {
-          // UPDATED: The success message is now more generic.
-          console.log('Successfully retrieved transactions:');
-          console.log(transactions);
-        } else {
-          // UPDATED: The message for an empty result is now more accurate.
-          console.log('Request was successful, but no transactions were returned.');
-        }
-      })
-      .catch(error => {
-        // This catch block will handle any unexpected errors during the process.
-        console.error("An error occurred while trying to get transactions:", error);
-      }); */
   });
 }
 
@@ -130,11 +119,9 @@ function setupBankLoginButtons() {
         } else {
           dialog = asyncResult.value;
           dialog.addEventHandler(Office.EventType.DialogMessageReceived, (arg) => {
-            console.log("Message received from dialog: " + arg.message);
             dialog.close();
           });
           dialog.addEventHandler(Office.EventType.DialogEventReceived, (arg) => {
-            console.log("Dialog event received: " + arg.error);
           });
         }
       }
@@ -153,11 +140,9 @@ function setupBankLoginButtons() {
         } else {
           dialog = asyncResult.value;
           dialog.addEventHandler(Office.EventType.DialogMessageReceived, (arg) => {
-            console.log("Message received from dialog: " + arg.message);
             dialog.close();
           });
           dialog.addEventHandler(Office.EventType.DialogEventReceived, (arg) => {
-            console.log("Dialog event received: " + arg.error);
           });
         }
       }
@@ -254,7 +239,6 @@ function setupDateSelection() {
   const oneWeekAgo = subDays(currentDate, 7);
   const formattedCurrentDate = format(currentDate, 'yyyy-MM-dd');
   const formattedDateOneWeekAgo = format(oneWeekAgo, 'yyyy-MM-dd');
-  console.log(formattedCurrentDate);
   document.getElementById('startDate').value = formattedDateOneWeekAgo;
   document.getElementById('endDate').value = formattedCurrentDate;
 }
