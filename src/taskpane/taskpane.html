@@ -55,7 +55,7 @@
                 <button type="button" title="Open ANB login page to download CSV" id="openAnbSiteButton">
                     Step 1: Open ANB Login
                 </button>
-                <div class="input-group" title="Select downloaded ANB CSV export" title="Select downloaded BOK CSV export">
+                <div class="input-group" title="Select downloaded ANB CSV export">
                     <label for="bok-csv-file-input" >Step 2: Choose the downloaded CSV file</label>
                     <input type="file" placeholder="Select file" accept=".csv" class="ms-TextField-field" id="anb-csv-file-input">
                 </div>
@@ -76,22 +76,40 @@
             <div class="accordion-panel" open>
                 <div class="form-section">
                     <!-- The Heading for the entire section -->
-                    <h3>Date Selection</h3>
+                    <h3>Option 1: Automatic</h3>
                     <!-- Our existing flex container for the inputs -->
                     <div class="input-container">
                         <!-- Group 1: Text Input -->
                         <div class="input-group date-group">
-                        <label for="itemName">Start Date</label>
+                        <label for="startDate">Start Date</label>
                         <input type="date" id="startDate">
                         </div>
                         <!-- Group 2: Number Input -->
                         <div class="input-group date-group">
-                        <label for="itemQuantity">End Date</label>
+                        <label for="endDate">End Date</label>
                         <input type="date" id="endDate">
                         </div>
                     </div> <!-- end of .input-container -->
+                    <button type="button" id="billSubmit">Submit</button>
+                </div><br>
+                <div class="form-section">
+                    <h3>Option 2: CSV Import</h3>
+                        <button type="button" title="Open Divvy/Bill login page to download CSV" id="openDivvySiteButton">
+                            Step 1: Open Divvy Login
+                        </button>
+                        <div class="input-group" title="Select downloaded Divvy/Bill Export">
+                            <label for="bok-csv-file-input" >Step 2: Choose the downloaded CSV file</label>
+                            <input type="file" placeholder="Select file" accept=".csv" class="ms-TextField-field" id="divvy-csv-file-input">
+                        </div>
+                        <div class="input-group" title="Select employees list">
+                            <label for="employees-csv-file-input">Step 3: Select employee list CSV</label>
+                            <input type="file" placeholder="Select file" accept=".csv" class="ms-TextField-field" id="employees-csv-file-input">
+                        </div>
+                        <button type="button" class="divvy-import-button" id="import-divvy-csv-button" title="Import CSV into current workbook">
+                            Import to Excel
+                        </button>
                 </div> <!-- end of .form-section -->
-                <button type="button" id="billSubmit">Submit</button><br><br><br>
+                <br><br>
             </div>
         </div>
     </form>
@@ -112,12 +130,12 @@
                     <div class="input-container">
                         <!-- Group 1: Text Input -->
                         <div class="input-group text-group">
-                        <label for="itemName">Address</label>
+                        <label for="divvyProxyAddress">Address</label>
                         <input type="text" id="divvyProxyAddress">
                         </div>
                         <!-- Group 2: Number Input -->
                         <div class="input-group number-group">
-                        <label for="itemQuantity">Port</label>
+                        <label for="divvyProxyPort">Port</label>
                         <input type="number" id="divvyProxyPort">
                         </div>
                     </div> <!-- end of .input-container -->
@@ -178,5 +196,7 @@
         });
     }
 
+</script>
+</html>
 </script>
 </html>

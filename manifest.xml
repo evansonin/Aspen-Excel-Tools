@@ -18,6 +18,9 @@
     <AppDomain>https://www.bokfinancial.com</AppDomain>
     <AppDomain>https://exchange.bokfinancial.com</AppDomain>
     <AppDomain>https://www.anbbank.com</AppDomain>
+    <AppDomain>https://login.us.bill.com</AppDomain>
+    <AppDomain>https://us.bill.com</AppDomain>
+
   </AppDomains>
 
   <Hosts>

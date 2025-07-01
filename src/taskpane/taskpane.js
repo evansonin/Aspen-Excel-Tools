@@ -22,10 +22,10 @@ import {
 } from "./utils/settingsManager";
 import { 
   getBillData,
+  manualDivvyWrite,
   writeToDivvySpreadsheet
 } from "./utils/divvyTool";
 import { showErrorDialog } from "./utils/errorDialogManager";
-
 let dialog = null;
 
 
@@ -61,6 +61,7 @@ Office.onReady((info) => {
 function billThingy() {
   // Find the button in the DOM
   const billButton = document.getElementById("billSubmit");
+  const betterBillButton = document.getElementById("billSubmitBetter");
 
   // Add the click event listener
   billButton.addEventListener("click", async () => {
@@ -79,7 +80,6 @@ function billThingy() {
       return;
     }
     
-
 
     // Call the getBillTransactions function
     try {
@@ -100,6 +100,7 @@ function billThingy() {
     }
     billButton.innerHTML = "Submit";
   });
+
 }
 
 /**
@@ -147,6 +148,26 @@ function setupBankLoginButtons() {
       }
     );
   });
+  const openDivvySiteButton = document.getElementById("openDivvySiteButton");
+  openDivvySiteButton.addEventListener("click", () => {
+    const url = "https://login.us.bill.com/neo/login";
+    Office.context.ui.displayDialogAsync(
+      url,
+      { height: 90, width: 80, displayInIframe: true },
+      (asyncResult) => {
+        if (asyncResult.status === Office.AsyncResultStatus.Failed) {
+          console.error("Dialog could not be opened: " + asyncResult.error.message);
+        } else {
+          dialog = asyncResult.value;
+          dialog.addEventHandler(Office.EventType.DialogMessageReceived, (arg) => {
+            dialog.close();
+          });
+          dialog.addEventHandler(Office.EventType.DialogEventReceived, (arg) => {
+          });
+        }
+      }
+    );
+  });
 }
 
 /**
@@ -167,54 +188,71 @@ function setupSettings() {
 }
 
 /**
- * Handles the import process for a given CSV file.
+ * Handles the import process
  * @param {File} file The CSV file to import.
  * @param {string} bankType The type of bank ("bok" or "anb").
  * @param {number} skipLines The number of lines to skip at the beginning of the CSV.
+ * @returns {Promise<Array | undefined>} A promise that resolves with the parsed data for 'divvy' bank type,
+ *                                       or undefined for other bank types or on error.
  */
 async function handleCsvImport(file, bankType, skipLines) {
-  if (!file) {
-    showErrorDialog("generic", "Please select a file.", null, "ok", baseUrl); // Pass baseUrl
-    return;
-  }
-
-  const reader = new FileReader();
-  reader.onload = async function (event) {
-    let parsedData;
-    const csvData = event.target.result;
-
-    parsedData = Papa.parse(csvData, { skipEmptyLines: true, skipFirstNLines: skipLines }).data;
-
-    if (parsedData && parsedData.length > 0) {
-      if (bankType === "anb") {
-        parsedData.sort((a, b) => new Date(a[1]) - new Date(b[1]));
-      }
-
-      if (correctWorkbookOpen(bankType)) {
-        writeToSpreadsheet(parsedData, bankType, showErrorDialog); // Pass showErrorDialog
-      } else {
-        let proceed = false;
-        if (document.getElementById('check-filename-checkbox').checked) {
-          proceed = await showErrorDialog("generic", `"${bankType.toUpperCase()}" not found in the currently open workbook's name. Proceed anyway?`, null, "yes-no", baseUrl); // Pass baseUrl
-        } else {
-          proceed = true;
-        }
-
-        if (proceed) {
-          writeToSpreadsheet(parsedData, bankType, showErrorDialog); // Pass showErrorDialog
-        }
-      }
-    } else {
-      console.error("Could not read data from CSV.");
-      showErrorDialog("generic", `Could not parse the CSV. Ensure you are using the CSV from ${bankType.toUpperCase()} for this tool.`, null, "ok", baseUrl); // Pass baseUrl
+  return new Promise((resolve, reject) => {
+    if (!file) {
+      showErrorDialog("generic", "Please select a file.", null, "ok", baseUrl);
+      resolve(undefined); // Resolve with undefined if no file is selected
+      return;
     }
-  };
 
-  reader.onerror = function (event) {
-    console.error("File could not be read! " + event.target.error);
-  };
+    const reader = new FileReader();
+    reader.onload = async function (event) {
+      let parsedData;
+      const csvData = event.target.result;
 
-  reader.readAsText(file);
+      parsedData = Papa.parse(csvData, { skipEmptyLines: true, skipFirstNLines: skipLines }).data;
+
+      if (parsedData && parsedData.length > 0) {
+        if (bankType === "divvy") {
+          resolve(parsedData); // Resolve the promise with the parsed data for 'divvy'
+          return; // Exit the onload function
+        }
+
+        // Logic for non-divvy bank types (bok, anb)
+        if (bankType === "anb") {
+          parsedData.sort((a, b) => new Date(a[1]) - new Date(b[1]));
+        }
+
+        if (correctWorkbookOpen(bankType)) {
+          writeToSpreadsheet(parsedData, bankType, showErrorDialog);
+          resolve(undefined); // Resolve with undefined as no data needs to be returned to caller for these types
+        } else {
+          let proceed = false;
+          if (document.getElementById('check-filename-checkbox').checked) {
+            proceed = await showErrorDialog("generic", `"${bankType.toUpperCase()}" not found in the currently open workbook's name. Proceed anyway?`, null, "yes-no", baseUrl);
+          } else {
+            proceed = true;
+          }
+
+          if (proceed) {
+            writeToSpreadsheet(parsedData, bankType, showErrorDialog);
+            resolve(undefined); // Resolve with undefined
+          } else {
+            resolve(undefined); // Resolve with undefined if user cancels
+          }
+        }
+      } else {
+        console.error("Could not read data from CSV.");
+        showErrorDialog("generic", `Could not parse the CSV. Ensure you are using the CSV from ${bankType.toUpperCase()} for this tool.`, null, "ok", baseUrl);
+        resolve(undefined); // Resolve with undefined on parsing error
+      }
+    };
+
+    reader.onerror = function (event) {
+      console.error("File could not be read! " + event.target.error);
+      reject(event.target.error); // Reject the promise on file read error
+    };
+
+    reader.readAsText(file);
+  });
 }
 
 /**
@@ -223,6 +261,8 @@ async function handleCsvImport(file, bankType, skipLines) {
 function setupCsvImportButtons() {
   const bokFileInput = document.getElementById("bok-csv-file-input");
   const anbFileInput = document.getElementById("anb-csv-file-input");
+  const divvyFileInput = document.getElementById("divvy-csv-file-input");
+  const employeeFileInput = document.getElementById("employees-csv-file-input");
 
   document.getElementById("import-bok-csv-button").addEventListener("click", async () => {
     await handleCsvImport(bokFileInput.files[0], "bok", 1);
@@ -230,6 +270,18 @@ function setupCsvImportButtons() {
 
   document.getElementById("import-anb-csv-button").addEventListener("click", async () => {
     await handleCsvImport(anbFileInput.files[0], "anb", 4);
+  });
+
+  const importDivvyButton = document.getElementById("import-divvy-csv-button");
+  importDivvyButton.addEventListener("click", async () => {
+    const transactionData = await handleCsvImport(divvyFileInput.files[0], "divvy", 1);
+    const employeeData = await handleCsvImport(employeeFileInput.files[0], "divvy", 0);
+    if (transactionData && employeeData) {
+      importDivvyButton.innerHTML = "Please wait...";
+      await manualDivvyWrite(transactionData, employeeData);
+      importDivvyButton.innerHTML = "Import to Excel";
+
+    }
   });
 }
 
