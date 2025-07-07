@@ -1,5 +1,3 @@
-/* global Excel, Office */
-
 import { baseUrl } from "../taskpane.js";
 // Date formatter used to generate sheet names in the format "Month Year" (e.g., "June 2025") based on dates from the CSV.
 const formatter = new Intl.DateTimeFormat("en-US", {
@@ -20,16 +18,16 @@ export async function writeToSpreadsheet(data, bank = "bok", showErrorDialog) {
   const anbClearedCheckbox = document.getElementById("anb-markCleared");
   let dataMonth;
 
-  // Define column indices for the Excel sheet for better readability and maintainability
+  // Define column indices for the Excel sheet
   const COL_DATE = 0;
   const COL_DESCRIPTION = 1;
   const COL_CLEARED = 2;
   const COL_CHECK_NUMBER = 3;
   const COL_IN = 4;
   const COL_OUT = 5;
-  const COL_BALANCE = 6; // Explicitly defined for range width calculation
+  const COL_BALANCE = 6; 
 
-  // Define CSV data indices for BOK and ANB for clarity
+  // Define CSV data indices for BOK and ANB
   const BOK_CSV = {
     DATE: 3,
     TYPE: 4,
@@ -53,7 +51,7 @@ export async function writeToSpreadsheet(data, bank = "bok", showErrorDialog) {
       case "anb":
         dataMonth = new Date(data[0][ANB_CSV.DATE]);
         break;
-      default: // Added default case for robustness
+      default: // This should theorietically never happen
         throw new Error("Invalid bank type specified.");
     }
     monthNumber = (dataMonth.getMonth() + 1).toString().padStart(2, "0");
@@ -106,9 +104,10 @@ export async function writeToSpreadsheet(data, bank = "bok", showErrorDialog) {
             });
             correctSheetExists = Object.keys(correctedSheetNamesObj).includes(correctSheet);
             if (correctSheetExists) {
-              workbook.worksheets.getItem(correctedSheetNamesObj[correctSheet]).activate(); // If the correct worksheet (albeit with leading/following spaces) exists, swtich to it
+              workbook.worksheets.getItem(correctedSheetNamesObj[correctSheet]).activate(); 
+              // If the correct worksheet (albeit with leading/following spaces) exists, swtich to it
             } else {
-              // If all else fails
+              // If a matching sheet still cannot be found (this program will not create a new sheet itself)
               showErrorDialog("missingSheet", undefined, correctSheet, "ok", baseUrl);
               throw new Error("The desired sheet was not found");
             }
@@ -137,7 +136,6 @@ export async function writeToSpreadsheet(data, bank = "bok", showErrorDialog) {
         let numericLastCheckNumber = 0; // Default if no previous check numbers or if cell is not a number
 
         // If the first empty row in Col D is > 7, it means there's data in or above row 7.
-        // The actual last check number is in the row *above* this first empty row.
         if (firstEmptyRowInCheckCol_D > 7) {
           const cellWithLastCheck = sheet.getCell(firstEmptyRowInCheckCol_D - 1, COL_CHECK_NUMBER);
           cellWithLastCheck.load("values");
@@ -165,7 +163,8 @@ export async function writeToSpreadsheet(data, bank = "bok", showErrorDialog) {
           }
         }
         // Loop to iterate through each item on the daily list
-        /*      Column 0: Date
+        /*      
+        Column 0: Date
         Column 1: Description
         Column 2: Cleared
         Column 3: Check # 
