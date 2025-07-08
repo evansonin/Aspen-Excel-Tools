@@ -18,6 +18,10 @@ export async function writeToSpreadsheet(data, bank = "bok", showErrorDialog) {
   const anbClearedCheckbox = document.getElementById("anb-markCleared");
   let dataMonth;
 
+  // How many rows to skip in the open spreadsheet when checking where the last entry is.
+  // This only needs to be changed if accounting changes formatting.
+  const ignoreUpToRowConstant = 7;
+
   // Define column indices for the Excel sheet
   const COL_DATE = 0;
   const COL_DESCRIPTION = 1;
@@ -51,7 +55,7 @@ export async function writeToSpreadsheet(data, bank = "bok", showErrorDialog) {
       case "anb":
         dataMonth = new Date(data[0][ANB_CSV.DATE]);
         break;
-      default: // This should theorietically never happen
+      default: // This should theoretically never happen
         throw new Error("Invalid bank type specified.");
     }
     monthNumber = (dataMonth.getMonth() + 1).toString().padStart(2, "0");
@@ -105,7 +109,7 @@ export async function writeToSpreadsheet(data, bank = "bok", showErrorDialog) {
             correctSheetExists = Object.keys(correctedSheetNamesObj).includes(correctSheet);
             if (correctSheetExists) {
               workbook.worksheets.getItem(correctedSheetNamesObj[correctSheet]).activate(); 
-              // If the correct worksheet (albeit with leading/following spaces) exists, swtich to it
+              // If the correct worksheet (albeit with leading/following spaces) exists, switch to it
             } else {
               // If a matching sheet still cannot be found (this program will not create a new sheet itself)
               showErrorDialog("missingSheet", undefined, correctSheet, "ok", baseUrl);
@@ -122,9 +126,9 @@ export async function writeToSpreadsheet(data, bank = "bok", showErrorDialog) {
       try {
         sheet = workbook.worksheets.getActiveWorksheet();
         await context.sync();
-        const firstEmptyRowIndex = await getFirstEmptyRow(7);
+        const firstEmptyRowIndex = await getFirstEmptyRow(ignoreUpToRowConstant);
 
-        const firstEmptyRowInCheckCol_D = await getFirstEmptyRow(7, "D");
+        const firstEmptyRowInCheckCol_D = await getFirstEmptyRow(ignoreUpToRowConstant, "D");
         if (firstEmptyRowInCheckCol_D === null) {
           showErrorDialog(
             "generic",
@@ -310,7 +314,7 @@ export async function getPreviousMonthsCheckNumber(dateString) {
 
   let lastMonthsCheckNumberRow;
   try {
-    lastMonthsCheckNumberRow = await getFirstEmptyRow(7, "D", newMonth);
+    lastMonthsCheckNumberRow = await getFirstEmptyRow(ignoreUpToRowConstant, "D", newMonth);
   } catch (error) {
     console.error(`Failed to get first empty row for previous month (${newMonth}). Assuming check number is 0. Error: ${error}`);
     return 0; // Default to 0 if previous month's sheet or row cannot be found
