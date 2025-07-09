@@ -446,7 +446,7 @@ const fixedAssetColumn = {
   width: 135
 };
 const strategicInitiativesColumn = {
-  title: "Stategic\nInitiatives",
+  title: "Stategic Initiatives",
   index: 12,
   letter: "M",
   width: 163
