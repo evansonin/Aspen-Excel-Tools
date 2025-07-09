@@ -28,8 +28,6 @@ import {
 import { showErrorDialog } from "./utils/errorDialogManager";
 let dialog = null;
 
-const BOK_URL = "https://exchange.bokfinancial.com/cdp/login/";
-const ANB_URL = "https://www.anbbank.com";
 
 let fullPath;
 let openFileName;
@@ -107,8 +105,9 @@ function billThingy() {
 function setupBankLoginButtons() {
   const openBokSiteButton = document.getElementById("openBokSiteButton");
   openBokSiteButton.addEventListener("click", () => {
+    const url = "https://exchange.bokfinancial.com/cdp/login/";
     Office.context.ui.displayDialogAsync(
-      BOK_URL,
+      url,
       { height: 90, width: 80, displayInIframe: true },
       (asyncResult) => {
         if (asyncResult.status === Office.AsyncResultStatus.Failed) {
@@ -127,8 +126,9 @@ function setupBankLoginButtons() {
 
   const openAnbSiteButton = document.getElementById("openAnbSiteButton");
   openAnbSiteButton.addEventListener("click", () => {
+    const url = "https://www.anbbank.com";
     Office.context.ui.displayDialogAsync(
-      ANB_URL,
+      url,
       { height: 90, width: 80, displayInIframe: true },
       (asyncResult) => {
         if (asyncResult.status === Office.AsyncResultStatus.Failed) {
