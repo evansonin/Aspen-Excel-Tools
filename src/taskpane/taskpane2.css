@@ -5,6 +5,7 @@ select { width: 100%; padding: 8px; margin-bottom: 3px; border: 1px solid #ccc; 
 button { padding: 10px 15px; background-color: #689E42; color: white; border: none; border-radius: 4px; cursor: pointer; margin-top: 15px; width: 100%;} 
 button:hover { background-color: #548A2E; }
 
+/* New: Hollow button style */
 button.hollow {
   background-color: transparent;
   color: #689E42;

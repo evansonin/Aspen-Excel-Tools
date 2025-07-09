@@ -31,7 +31,8 @@ let dialog = null;
 
 let fullPath;
 let openFileName;
-export let baseUrl; // for pop-ups
+// For making the error dialog work both in bebugging and in the published version
+export let baseUrl;
 
 /**
  * Initializes global variables related to the workbook and add-in base URL.
@@ -55,12 +56,14 @@ Office.onReady((info) => {
 });
 
 /**
- * Attach a click event listener to a button to fetch Bill.com transactions.
+ * Attaches a click event listener to a button to fetch Bill.com transactions.
  */
 function billThingy() {
+  // Find the button in the DOM
   const billButton = document.getElementById("billSubmit");
   const betterBillButton = document.getElementById("billSubmitBetter");
 
+  // Add the click event listener
   billButton.addEventListener("click", async () => {
     const startDate = document.getElementById("startDate").value;
     const endDate = document.getElementById("endDate").value;
@@ -78,6 +81,7 @@ function billThingy() {
     }
     
 
+    // Call the getBillTransactions function
     try {
       let billData = await getBillData(startDate, endDate);
 
@@ -212,7 +216,7 @@ async function handleCsvImport(file, bankType, skipLines) {
           return; // Exit the onload function
         }
 
-        // Logic for non-divvy banks (bok, anb)
+        // Logic for non-divvy bank types (bok, anb)
         if (bankType === "anb") {
           parsedData.sort((a, b) => new Date(a[1]) - new Date(b[1]));
         }
@@ -273,8 +277,7 @@ function setupCsvImportButtons() {
     const transactionData = await handleCsvImport(divvyFileInput.files[0], "divvy", 1);
     const employeeData = await handleCsvImport(employeeFileInput.files[0], "divvy", 0);
     if (transactionData && employeeData) {
-      importDivvyButton.innerHTML = "Please wait..."; 
-      // Change the button to indicate loading since this can take a while
+      importDivvyButton.innerHTML = "Please wait...";
       await manualDivvyWrite(transactionData, employeeData);
       importDivvyButton.innerHTML = "Import to Excel";
 

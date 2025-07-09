@@ -4,8 +4,8 @@ import { baseUrl } from "../taskpane.js";
 
 
 /**
- * Retrieves a list of transactions by calling the backend proxy.
- * Fetches transactions within a specified date range.
+ * Retrieves a list of transactions by calling our secure backend proxy.
+ * This version fetches transactions within a specified date range.
  *
  * @param {string} startDate - The start date for filtering transactions (YYYY-MM-DD).
  * @param {string} endDate - The end date for filtering transactions (YYYY-MM-DD).
@@ -27,8 +27,8 @@ export async function getBillData(startDate, endDate) {
       }
     });
     if (!response.ok) {
-      // If the status is 4xx or 5xx
-      console.error('[Client] Response was NOT OK. Status:', response.status);
+      // This block runs if the status is 4xx or 5xx
+      console.error('3. [Client] Response was NOT OK. Status:', response.status);
       const errorData = await response.json();
       throw new Error(`API Error: ${errorData.message || response.statusText}`);
     }
@@ -36,7 +36,7 @@ export async function getBillData(startDate, endDate) {
     return responseData;
 
   } catch (error) {
-    console.error('[Client] An error occurred in getBillTransactions:', error);
+    console.error('!!! [Client] An error occurred in getBillTransactions:', error);
     if(error.message.includes("Invalid or missing passcode")) {
       showErrorDialog("generic", "Incorrect password. Please check you have entered the correct password and hit \"Save Settings\".", null, "ok", baseUrl);
     } else if(error.message.includes("Failed to fetch")) {
@@ -102,6 +102,7 @@ export async function writeToDivvySpreadsheet(users, transactions, employees, st
     // Transaction Description
     sortedTransactions[transactionKey].merchantName = (currentTransaction.merchantName);
   }
+  // console.log(sortedTransactions);
   try {
     await Excel.run(async (context) => {
       const sheet = context.workbook.worksheets.getActiveWorksheet();
@@ -117,7 +118,7 @@ export async function writeToDivvySpreadsheet(users, transactions, employees, st
       await context.sync();
     });
   } catch (error) {
-    console.error("[Client] An error occurred in writeToDivvySpreadsheet:", error);
+    console.error("!!! [Client] An error occurred in writeToDivvySpreadsheet:", error);
     showErrorDialog("generic", "Error copying Divvy/Bill export data to Excel. If you recently requested data, please wait a few minutes or change the date range.", null, "ok", baseUrl);
   }
 }
@@ -236,7 +237,6 @@ export async function manualDivvyWrite(transactions, employees) {
     sortedTransactions[transactionKey].department = department;
 
     // FE Account
-    // TBA
 
     // Program (2nd) - Extract the leading part before the first space, or use the whole string if no space
     let secondProgramValue = firstProgram;
@@ -310,7 +310,7 @@ export async function manualDivvyWrite(transactions, employees) {
     if (a.name !== "Divvy" && b.name === "Divvy") {
       return 1; // Other names come after "Divvy"
     }
-    // If neither are "Divvy", sort alphabetically by name
+    // If both are "Divvy" or neither are "Divvy", sort alphabetically by name
     return a.name.localeCompare(b.name);
   });
 
@@ -330,6 +330,7 @@ export async function manualDivvyWrite(transactions, employees) {
     dateRangeForSheetName = `${formattedEarliest} - ${formattedLatest} Transactions`;
   }
 
+  console.log(transactionsArray); // Log the sorted array instead of the object
   try {
     await Excel.run(async (context) => {
       const sheet = context.workbook.worksheets.getActiveWorksheet();
@@ -344,7 +345,7 @@ export async function manualDivvyWrite(transactions, employees) {
 
     });
   } catch (error) {
-    console.error("[Client] An error occurred in manualDivvyWrite:", error);
+    console.error("!!! [Client] An error occurred in manualDivvyWrite:", error);
     showErrorDialog("generic", "Error setting up spreadsheet for manual Divvy write.", null, "ok", baseUrl);
   }
 }
@@ -354,8 +355,6 @@ export async function manualDivvyWrite(transactions, employees) {
  * @param {Excel.RequestContext} context - The Excel request context.
  * @param {Excel.Worksheet} sheet - The active worksheet.
  */
-const headerColor = "DAF2D0";
-
 async function setupSpreadsheet(context, sheet) {
   // Write column headers and apply formatting
   for (const column of columns) {
@@ -365,7 +364,7 @@ async function setupSpreadsheet(context, sheet) {
     headerRange.format.font.bold = true;
     headerRange.format.verticalAlignment = "Bottom";
     headerRange.format.horizontalAlignment = "Center"; 
-    headerRange.format.wrapText = true;
+    headerRange.format.columnHeight = 29;
 
     // Set column width
     sheet.getRange(column.letter + ":" + column.letter).format.columnWidth = column.width / 2; // Not sure why it has to divded by two but it does
@@ -416,9 +415,9 @@ const secondProgramColumn = {
   width: 93
 };
 const importAmountColumn = {
-  title: "Import Amount",
+  title: "Import\nAmount",
   index: 7,
-  letter: "H",
+  letter: "H", // Changed 'h' to 'H' for consistency
   width: 127
 };
 const expenseDescriptionColumn = {
@@ -474,3 +473,5 @@ const columns =
   jeDescriptionColumn
   ];
 
+const headerColor = "DAF2D0";
+const columnHeight = 29; // Corrected variable name from 'columnHeight' to 'const columnHeight'

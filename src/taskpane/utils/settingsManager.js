@@ -23,7 +23,10 @@ export function loadSettings() {
   try {
       const loadedSettings = JSON.parse(storedSettingsString);
       
-      // Merge with defaults
+      // Merge with defaults. This is crucial for future-proofing.
+      // It ensures that if we add a new property to `defaultSettings`,
+      // users with old saved settings will still get that new property.
+      // The properties from `loadedSettings` will overwrite the `defaultSettings`.
       const finalSettings = { ...defaultSettings, ...loadedSettings };
       
       return finalSettings;
@@ -37,7 +40,7 @@ export function loadSettings() {
 
 /**
  * Saves settings to local storage.
- * @param {object} settingsObject 
+ * @param {object} settingsObject The settings object to save.
  */
 export function saveSettings(settingsObject) {
   try {
@@ -58,11 +61,16 @@ export function getSettingsFromUI() {
   const divvyProxyPortEl = document.getElementById('divvyProxyPort');
   const divvyPasswordEl = document.getElementById('divvyPassword');
 
+  // Add other UI elements here in the future
+  // const authorNameEl = document.getElementById('author-name-input');
+  // const maxRowCountEl = document.getElementById('max-row-count-input');
+
   return {
-    checkFileName: checkFilenameEl.checked,
-    divvyProxyAddress: divvyProxyAddressEl.value,
-    divvyProxyPort: divvyProxyPortEl.value,
-    divvyPassword: divvyPasswordEl.value
+      checkFileName: checkFilenameEl.checked,
+      divvyProxyAddress: divvyProxyAddressEl.value,
+      divvyProxyPort: divvyProxyPortEl.value,
+      divvyPassword: divvyPasswordEl.value
+      // maxRowCount: parseInt(maxRowCountEl.value, 10) || 0 // Parse integers
   };
 }
 
@@ -87,6 +95,12 @@ export function applySettingsToUI(settings) {
   if (divvyPasswordEl) {
     divvyPasswordEl.value = settings.divvyPassword;
   }
+
+  // Add other UI elements here in the future
+  // const authorNameEl = document.getElementById('author-name-input');
+  // if (authorNameEl) {
+  //     authorNameEl.value = settings.authorName;
+  // }
 }
 
 /**
@@ -99,13 +113,14 @@ export function resetToDefaultSettings() {
 
 /**
  * Stores a key-value pair in local storage, respecting Office.context.partitionKey.
- * @param {string} key 
- * @param {string} value 
+ * @param {string} key The key to store.
+ * @param {string} value The value to store.
  */
 export function setInLocalStorage(key, value) {
   const myPartitionKey = Office.context.partitionKey;
 
-  // Check if local storage is partitioned, and if it is, use it
+  // Check if local storage is partitioned. 
+  // If so, use the partition to ensure the data is only accessible by your add-in.
   if (myPartitionKey) {
     localStorage.setItem(myPartitionKey + key, value);
   } else {
@@ -115,8 +130,8 @@ export function setInLocalStorage(key, value) {
 
 /**
  * Retrieves a value from local storage, respecting Office.context.partitionKey.
- * @param {string} key 
- * @returns {string|null} 
+ * @param {string} key The key to retrieve.
+ * @returns {string|null} The retrieved value, or null if not found.
  */
 export function getFromLocalStorage(key) {
   const myPartitionKey = Office.context.partitionKey;
